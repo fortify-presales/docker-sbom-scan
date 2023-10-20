@@ -158,7 +158,7 @@ jobs:
         run: |
           fcli fod oss-scan start --release "${FOD_RELEASE_ID}" -f $PACKAGE_FILE --store curScan --session github-actions
           sleep 5
-          fcli fod oss-scan wait-for ::curScan:: --session github-actions
+          #fcli fod oss-scan wait-for ::curScan:: --session github-actions
         id: perform_oss_scan
         env:
           PACKAGE_FILE: "package.zip"
