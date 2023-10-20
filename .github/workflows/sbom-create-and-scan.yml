@@ -119,7 +119,7 @@ jobs:
 
       #
       - name: Create SBOM from Docker Image
-      - uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0
         with:
           image: ${{ github.event.inputs.dockerImage }}
           artifact-name: bom.json
