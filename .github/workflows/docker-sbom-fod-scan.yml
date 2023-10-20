@@ -24,6 +24,7 @@ on:
 # Global environment variables
 env:
   DEFAULT_APP_NAME: "Docker-SBOM-Scan"
+  DEFAULT_DOCKER_IMAGE: "neo4j:4.4.5"
   #FCLI_VER: "v1.3"
   FCLI_VER: "dev_2.0.0-beta"
   SCANCENTRAL_VER: "23.1.0"
@@ -44,8 +45,19 @@ jobs:
       - run: git checkout HEAD^2
         if: ${{ github.event_name == 'pull_request' }}
 
-      - name: Output Inputs
-        run: echo "${{ toJSON(github.event.inputs) }}"
+      - name: Set Docker Image Name
+        shell: bash
+        run: |
+          echo "${{ toJSON(github.event.inputs) }}"
+          if [[ -z "$DOCKER_IMAGE_FROM_INPUTS" ]]; then
+            echo "::debug::Setting DOCKER_IMAGE environment variable to default: $DEFAULT_DOCKER_IMAGE"
+            echo "DOCKER_IMAGE=$(echo ${DEFAULT_DOCKER_IMAGE})" >> $GITHUB_ENV
+          else
+            echo "::debug::Setting DOCKER_IMAGE_NAME environment variable to input override: $DOCKER_IMAGE_FROM_INPUTS"
+            echo "DOCKER_IMAGE=$(echo ${DOCKER_IMAGE_FROM_INPUTS})" >> $GITHUB_ENV
+          fi
+        env:
+          DOCKER_IMAGE_FROM_INPUTS: ${{ github.event.inputs.dockerImage }}
 
       # Java is required to run the various Fortify utilities.
       # Setup JDK 11 on host
@@ -69,6 +81,7 @@ jobs:
           DEFAULT_APP_NAME: ${{ env.DEFAULT_APP_NAME }}
           APP_NAME_OVERRIDE: ${{ vars.FOD_APP_NAME }}
         id: set_fod_app_name
+
 
       # Get the branch name or pr number
       #- name: Extract branch name
@@ -117,13 +130,13 @@ jobs:
           echo "FOD_RELEASE_ID=${RELID}" >> $GITHUB_OUTPUT
         id: create_fod_release
         env:
-          FOD_RELEASE_NAME: ${{ format('{0}#{1}', env.FOD_APP_NAME, github.event.inputs.dockerImage) }}
+          FOD_RELEASE_NAME: ${{ format('{0}#{1}', env.FOD_APP_NAME, env.DOCKER_IMAGE) }}
 
       #
       - name: Create SBOM from Docker Image
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ github.event.inputs.dockerImage }}
+          image: ${{ env.DOCKER_IMAGE }}
           artifact-name: bom.json
           format: cyclonedx-json
           #registry-username: ${{ secrets.REGISTER_USERNAME }}
