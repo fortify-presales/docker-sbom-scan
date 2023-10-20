@@ -137,6 +137,7 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.DOCKER_IMAGE }}
+          output-file: ${{ github.workspace }}
           artifact-name: bom.json
           format: cyclonedx-json
           #registry-username: ${{ secrets.REGISTER_USERNAME }}
@@ -147,14 +148,15 @@ jobs:
         uses: TheDoctor0/zip-release@0.7.1
         with:
           type: 'zip'
+          directory: ${{ github.workspace }}
           filename: 'package.zip'
-          exclusions: '*.git* bin'
+          exclusions: '*.git* *.idea* bin README* LICENSE'
 
       # Start Fortify on Demand OSS scan and wait until results complete.
       - name: Perform OSS scan
         shell: bash
         run: |
-          fcli fod oss-scan start --delim "#" --release "${FOD_RELEASE_ID}" --notes "${FOD_SCAN_NOTES}" -f $PACKAGE_FILE --store curScan --session github-actions
+          fcli fod oss-scan start --delim "#" --release "${FOD_RELEASE_ID}" -f $PACKAGE_FILE --store curScan --session github-actions
           sleep 5
           fcli fod oss-scan wait-for ::curScan:: --session github-actions
         id: perform_oss_scan
@@ -162,7 +164,6 @@ jobs:
           PACKAGE_FILE: "package.zip"
           #FOD_RELEASE_NAME: ${{ format('{0}#{1}', env.FOD_APP_NAME, github.event.inputs.dockerImage) }}
           FOD_RELEASE_ID: ${{ steps.create_fod_release.output.FOD_RELEASE_ID }}
-          FOD_SCAN_NOTES: "Triggered by GitHub Actions (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
 
       # Pull SAST issues from Fortify on Demand and generate GitHub-optimized SARIF output
       #- name: Export Results
