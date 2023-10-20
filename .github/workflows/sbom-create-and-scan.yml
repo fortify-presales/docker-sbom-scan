@@ -30,7 +30,7 @@ env:
 
 jobs:
 
-  FoD-SBON-Scan:
+  FoD-SBOM-Scan:
     runs-on: ubuntu-latest
 
     # Checkout the code
@@ -108,7 +108,6 @@ jobs:
       - name: Create FoD release
         shell: bash
         run: |
-          fcli fod release list --app "$FOD_APP_NAME" --session github-actions
           echo fcli fod release create "${FOD_RELEASE_NAME}" --delim "#" --description "Created automatically from GitHub" --status Development --skip-if-exists -o expr="{releaseId}" --session github-actions
           RELID=$(fcli fod release create "${FOD_RELEASE_NAME}" --delim "#" --description "Created automatically from GitHub" --status Development --skip-if-exists -o expr="{releaseId}" --session github-actions)
           echo "::debug::Created FOD_RELEASE_ID=${RELID}"
