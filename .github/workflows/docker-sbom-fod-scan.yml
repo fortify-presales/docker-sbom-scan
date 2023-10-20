@@ -127,7 +127,7 @@ jobs:
           echo fcli fod release create "${FOD_RELEASE_NAME}" --delim "#" --description "Created automatically from GitHub" --status Development --skip-if-exists -o expr="{releaseId}" --session github-actions
           RELID=$(fcli fod release create "${FOD_RELEASE_NAME}" --delim "#" --description "Created automatically from GitHub" --status Development --skip-if-exists -o expr="{releaseId}" --session github-actions)
           echo "::debug::Created FOD_RELEASE_ID=${RELID}"
-          echo "FOD_RELEASE_ID=${RELID}" >> $GITHUB_OUTPUT
+          echo "FOD_RELEASE_ID=$(echo ${RELID})" >> $GITHUB_ENV
         id: create_fod_release
         env:
           FOD_RELEASE_NAME: ${{ format('{0}#{1}', env.FOD_APP_NAME, env.DOCKER_IMAGE) }}
@@ -156,14 +156,14 @@ jobs:
       - name: Perform OSS scan
         shell: bash
         run: |
-          fcli fod oss-scan start --delim "#" --release "${FOD_RELEASE_ID}" -f $PACKAGE_FILE --store curScan --session github-actions
+          fcli fod oss-scan start --release "${FOD_RELEASE_ID}" -f $PACKAGE_FILE --store curScan --session github-actions
           sleep 5
           fcli fod oss-scan wait-for ::curScan:: --session github-actions
         id: perform_oss_scan
         env:
           PACKAGE_FILE: "package.zip"
           #FOD_RELEASE_NAME: ${{ format('{0}#{1}', env.FOD_APP_NAME, github.event.inputs.dockerImage) }}
-          FOD_RELEASE_ID: ${{ steps.create_fod_release.output.FOD_RELEASE_ID }}
+          FOD_RELEASE_ID: ${{ env.FOD_RELEASE_ID }}
 
       # Pull SAST issues from Fortify on Demand and generate GitHub-optimized SARIF output
       #- name: Export Results
